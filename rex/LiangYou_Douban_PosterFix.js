@@ -4,10 +4,10 @@
  */
 var WidgetMetadata = {
   id: "liangyou.douban.cinema",
-  title: "豆瓣影院 · LiangYou",
+  title: "豆瓣影院 · LiangYouTech",
   description: "院线电影与即将上映；优先显示有效的 TMDB 海报，豆瓣图片备用",
-  author: "LiangYou",
-  version: "1.0.0",
+  author: "LiangYouTech",
+  version: "1.1.0",
   requiredVersion: "0.0.1",
   site: "https://movie.douban.com/cinema/",
   modules: [
@@ -26,8 +26,11 @@ var LY_DB_HEADERS = {
 };
 function lyDbList(raw) {
   var d = raw && (raw.data || raw) || {};
-  return Array.isArray(d) ? d :
-    (d.subject_collection_items || d.items || d.subjects || []);
+  if (typeof d === "string") {
+    try { d = JSON.parse(d); } catch(e) { return []; }
+  }
+  if (typeof d.data === "object" && !Array.isArray(d)) d = d.data;
+  return Array.isArray(d) ? d : (d.subject_collection_items || d.items || d.subjects || []);
 }
 function lyDbUrl(v) {
   if (!v) return "";
@@ -36,6 +39,9 @@ function lyDbUrl(v) {
   if (s.indexOf("//") === 0) s = "https:" + s;
   if (s.indexOf("http://") === 0) s = "https://" + s.slice(7);
   return /^https:\/\//.test(s) ? s : "";
+}
+function lyDbTmdbPath(v) {
+  return typeof v === "string" && /^\/[A-Za-z0-9_\-]+\.(?:jpe?g|png|webp)$/i.test(v.trim()) ? v.trim() : "";
 }
 function lyDbPoster(raw) {
   var m = raw && (raw.subject || raw.target || raw.work || raw) || {};
@@ -78,14 +84,18 @@ async function lyDbCard(raw) {
       var r = await Widget.tmdb.get("search/movie", {params:{query:title,language:"zh-CN",page:1}});
       var d = r && (r.data || r) || {};
       var x = lyDbMatch(m, d.results);
-      if (x) return {
+      if (x) {
+        var poster = lyDbTmdbPath(x.poster_path);
+        var backdrop = lyDbTmdbPath(x.backdrop_path) || poster;
+        return {
         id:Number(x.id),tmdbId:x.id,type:"tmdb",mediaType:"movie",
         title:title,description:x.overview || m.card_subtitle || "",
-        posterPath:x.poster_path,backdropPath:x.backdrop_path || x.poster_path,
-        coverUrl:"https://image.tmdb.org/t/p/w780" + x.poster_path,
+        posterPath:poster,backdropPath:backdrop,
+        coverUrl:poster ? "https://image.tmdb.org/t/p/w780" + poster : fallback,
         rating:Number(m.rating && (m.rating.value || m.rating.average) || x.vote_average) || 0,
         releaseDate:x.release_date || String(year || "")
       };
+      }
     }
   } catch (e) { /* TMDB unavailable: show the original Douban card instead. */ }
   return {
