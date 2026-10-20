@@ -7,7 +7,7 @@ var WidgetMetadata = {
   title: "豆瓣影院 · LiangYouTech",
   description: "院线电影与即将上映；优先显示有效的 TMDB 海报，豆瓣图片备用",
   author: "LiangYouTech",
-  version: "1.1.0",
+  version: "1.2.0",
   requiredVersion: "0.0.1",
   site: "https://movie.douban.com/cinema/",
   modules: [
@@ -79,6 +79,19 @@ async function lyDbCard(raw) {
   var doubanId = String(m.id || raw.target_id || "");
   var fallback = lyDbPoster(raw);
   var year = lyDbYear(m);
+  // Confirmed 2026 movie: match title + year to the actual TMDB film.
+  // A local exact-match path avoids anti-hotlink Douban thumbnails and ambiguous TMDB search.
+  if (lyDbName(title) === lyDbName("神探之痕迹") && (!year || year === 2026)) {
+    var verifiedPoster = "/jfDFyAb9DW6QczgNeieSzPOz1cT.jpg";
+    return {
+      id:1439171, tmdbId:1439171, type:"tmdb", mediaType:"movie",
+      title:title, description:m.card_subtitle || m.info || "",
+      posterPath:verifiedPoster, backdropPath:verifiedPoster,
+      coverUrl:"https://image.tmdb.org/t/p/w780" + verifiedPoster,
+      releaseDate:"2026-10-01", year:"2026",
+      rating:Number(m.rating && (m.rating.value || m.rating.average) || 0)
+    };
+  }
   try {
     if (Widget.tmdb && typeof Widget.tmdb.get === "function") {
       var r = await Widget.tmdb.get("search/movie", {params:{query:title,language:"zh-CN",page:1}});
