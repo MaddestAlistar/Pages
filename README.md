@@ -6,6 +6,7 @@ Rex / Forward 首页扩展组件。
 
 - [猫眼电影](rex/LiangYou_Maoyan_PosterFix.js)
 - [豆瓣影院](rex/LiangYou_Douban_PosterFix.js)
+- [豆瓣影院 · 图片直连实验版](rex/LiangYou_Douban_ExplicitPoster.js)
 
 ## 在线地址
 
