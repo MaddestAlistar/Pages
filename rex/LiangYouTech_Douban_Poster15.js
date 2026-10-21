@@ -143,7 +143,7 @@ async function lyDbLoad(collection,params) {
   // Verify that Rex actually runs the new module rather than a previous cached card.
   // Match the visibly missing film regardless of which Douban/TMDB branch built the card.
   return out.filter(function(x){return x && x.title;}).map(function(card) {
-    if (/神探.{0,5}痕迹/.test(String(card.title || "").replace(/\\s+/g,""))) {
+    if (/神探.{0,5}痕迹/.test(String(card.title || "").replace(/\s+/g,""))) {
       return {
         id:"movie.1439171",type:"tmdb",mediaType:"movie",
         title:"神探之痕迹〔LY15〕",
